@@ -168,7 +168,42 @@
     const jsonBox = document.getElementById("jsonBox");
     let base64Image = "";
 
-    // Hàm tự động nén ảnh để giảm dung lượng lưu trữ
+    // 1. Khởi tạo cơ sở dữ liệu IndexedDB
+    let db;
+    const request = indexedDB.open("TestPointDB", 1);
+
+    request.onupgradeneeded = function(e) {
+      db = e.target.result;
+      if (!db.objectStoreNames.contains("testpoints")) {
+        db.createObjectStore("testpoints", { keyPath: "id", autoIncrement: true });
+      }
+    };
+
+    request.onsuccess = function(e) {
+      db = e.target.result;
+      
+      // Chuyển dữ liệu cũ từ localStorage sang IndexedDB nếu có
+      const oldStorage = localStorage.getItem("testpoint_db");
+      if (oldStorage) {
+        try {
+          const oldData = JSON.parse(oldStorage);
+          if (Array.isArray(oldData) && oldData.length > 0) {
+            const tx = db.transaction("testpoints", "readwrite");
+            const store = tx.objectStore("testpoints");
+            oldData.forEach(item => store.add(item));
+            localStorage.removeItem("testpoint_db"); // Dọn dẹp localStorage cũ
+          }
+        } catch(err) { console.error(err); }
+      }
+      
+      updateJsonBox();
+    };
+
+    request.onerror = function(e) {
+      console.error("Lỗi khi mở IndexedDB", e);
+    };
+
+    // 2. Nén ảnh giảm kích thước
     function compressImage(file, maxWidth, quality, callback) {
       const reader = new FileReader();
       reader.onload = function(evt) {
@@ -187,8 +222,6 @@
           canvas.height = height;
           const ctx = canvas.getContext("2d");
           ctx.drawImage(img, 0, 0, width, height);
-
-          // Nén thành ảnh JPEG chất lượng nhẹ hơn
           const compressedDataUrl = canvas.toDataURL("image/jpeg", quality);
           callback(compressedDataUrl);
         };
@@ -197,12 +230,11 @@
       reader.readAsDataURL(file);
     }
 
-    // Đọc và nén file ảnh khi chọn
+    // Khi chọn ảnh
     imageFileInput.addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (file) {
         fileName.textContent = file.name;
-        // Nén ảnh về chiều rộng tối đa 800px, chất lượng 0.7 (giảm dung lượng đáng kể)
         compressImage(file, 800, 0.7, function(compressedBase64) {
           base64Image = compressedBase64;
           imgPreview.src = base64Image;
@@ -211,14 +243,21 @@
       }
     });
 
-    // Cập nhật ô hiển thị JSON
+    // Cập nhật ô JSON từ IndexedDB
     function updateJsonBox() {
-      const currentDb = JSON.parse(localStorage.getItem("testpoint_db")) || [];
-      jsonBox.value = JSON.stringify(currentDb, null, 2);
-    }
-    updateJsonBox();
+      if (!db) return;
+      const tx = db.transaction("testpoints", "readonly");
+      const store = tx.objectStore("testpoints");
+      const getReq = store.getAll();
 
-    // Lưu dữ liệu mới
+      getReq.onsuccess = function() {
+        // Loại bỏ trường id tự tăng khi xuất mã JSON
+        const cleanData = getReq.result.map(({ id, ...rest }) => rest);
+        jsonBox.value = JSON.stringify(cleanData, null, 2);
+      };
+    }
+
+    // Lưu dữ liệu mới vào IndexedDB
     document.getElementById("adminForm").addEventListener("submit", (e) => {
       e.preventDefault();
       const keywordVal = document.getElementById("keyword").value.trim().toLowerCase();
@@ -229,27 +268,28 @@
         return;
       }
 
-      let currentDb = JSON.parse(localStorage.getItem("testpoint_db")) || [];
-      currentDb.push({
+      const newItem = {
         keyword: keywordVal,
         title: titleVal,
         image: base64Image
-      });
+      };
 
-      try {
-        localStorage.setItem("testpoint_db", JSON.stringify(currentDb));
+      const tx = db.transaction("testpoints", "readwrite");
+      const store = tx.objectStore("testpoints");
+      const addReq = store.add(newItem);
+
+      addReq.onsuccess = function() {
         alert("Đã lưu thành công!");
-        
-        // Reset Form
         document.getElementById("adminForm").reset();
         imgPreview.style.display = "none";
         fileName.textContent = "Bấm để chọn ảnh";
         base64Image = "";
         updateJsonBox();
-      } catch (error) {
-        alert("Bộ nhớ localStorage đã đầy! Bạn hãy copy mã JSON hiện tại cất đi hoặc xoá bớt dữ liệu trình duyệt.");
-        console.error("Lỗi bộ nhớ:", error);
-      }
+      };
+
+      addReq.onerror = function() {
+        alert("Có lỗi xảy ra khi lưu dữ liệu!");
+      };
     });
   </script>
 </body>
