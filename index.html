@@ -154,28 +154,48 @@
 
     // Hàm thực hiện chức năng sao chép hình ảnh
     async function copyImage() {
-      const imgSrc = document.getElementById('modalImg').src;
+      const imgEl = document.getElementById('modalImg');
+      const imgSrc = imgEl.src;
       const copyIcon = document.getElementById('copyIcon');
       const copyText = document.getElementById('copyText');
-      
-      try {
-        const response = await fetch(imgSrc);
-        const blob = await response.blob();
-        await navigator.clipboard.write([
-          new ClipboardItem({ [blob.type]: blob })
-        ]);
-        
-        // Hiệu ứng hoàn tất copy
+      const resetBtn = () => setTimeout(() => {
+        copyIcon.className = 'fa-regular fa-copy';
+        copyText.textContent = 'Sao chép';
+      }, 2000);
+
+      const ok = () => {
         copyIcon.className = 'fa-solid fa-check';
         copyText.textContent = 'Đã chép';
-        setTimeout(() => {
-          copyIcon.className = 'fa-regular fa-copy';
-          copyText.textContent = 'Sao chép';
-        }, 2000);
-      } catch (err) {
-        alert('Trình duyệt không hỗ trợ sao chép ảnh trực tiếp hoặc ảnh đang bị lỗi.');
-        console.error('Lỗi sao chép ảnh:', err);
-      }
+        resetBtn();
+      };
+
+      // Cách 1: vẽ ảnh vào canvas rồi copy PNG (không cần fetch, tránh CORS khi cùng origin)
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = imgEl.naturalWidth;
+        canvas.height = imgEl.naturalHeight;
+        canvas.getContext('2d').drawImage(imgEl, 0, 0);
+        const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+        ok();
+        return;
+      } catch (e1) { console.warn('Canvas copy fail, thử fetch...', e1); }
+
+      // Cách 2: fetch blob trực tiếp (ảnh jpg/webp trên cùng host)
+      try {
+        const response = await fetch(imgSrc);
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const blob = await response.blob();
+        const type = (blob.type && blob.type.startsWith('image/')) ? blob.type : 'image/png';
+        await navigator.clipboard.write([new ClipboardItem({ [type]: blob })]);
+        ok();
+        return;
+      } catch (e2) { console.warn('Fetch copy fail...', e2); }
+
+      // Cách 3: chỉ mở ảnh thật (nếu clipboard API bị chặn hoàn toàn)
+      window.open(imgSrc, '_blank');
+      copyText.textContent = 'Đã mở ảnh';
+      resetBtn();
     }
   </script>
 </body>
