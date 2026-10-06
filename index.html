@@ -39,6 +39,35 @@
     .zoom-btn { background: #262832; border: 1px solid #3b3d46; color: #818cf8; font-size: 16px; cursor: pointer; transition: 0.2s; width: 30px; height: 30px; border-radius: 8px; font-weight: 700; line-height: 1; }
     .zoom-btn:hover { background: #30323d; border-color: #6366f1; color: #a5b4fc; }
     .empty-state { text-align: center; color: #6b7280; padding: 40px 0; font-size: 14px; }
+
+    /* ===== TOAST ===== */
+    #toast {
+      position: fixed; bottom: 30px; left: 50%;
+      transform: translateX(-50%) translateY(24px) scale(.9);
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: #fff; padding: 12px 24px; border-radius: 999px;
+      font-size: 14px; font-weight: 600;
+      display: flex; align-items: center; gap: 8px;
+      opacity: 0; pointer-events: none;
+      transition: all .3s cubic-bezier(.22, 1, .36, 1);
+      z-index: 200;
+      box-shadow: 0 10px 30px -6px rgba(99, 102, 241, .5);
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0) scale(1);
+    }
+    #toast .t-icon {
+      width: 20px; height: 20px; border-radius: 50%;
+      background: rgba(255,255,255,.25);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 11px;
+      animation: tPop .4s cubic-bezier(.34, 1.56, .64, 1);
+    }
+    @keyframes tPop {
+      0% { transform: scale(0); }
+      100% { transform: scale(1); }
+    }
   </style>
 </head>
 <body>
@@ -214,6 +243,22 @@
       _origOpenModal(title, imgSrc);
     };
 
+    // ===== TOAST =====
+    let toastTimer = null;
+    function showToast(msg, icon = '✓') {
+      const t = document.getElementById('toast');
+      document.getElementById('toastMsg').textContent = msg;
+      document.getElementById('toastIcon').textContent = icon;
+      // restart animation icon
+      const ic = document.getElementById('toastIcon');
+      ic.style.animation = 'none';
+      void ic.offsetWidth;
+      ic.style.animation = '';
+      t.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
     // Hàm thực hiện chức năng sao chép hình ảnh
     async function copyImage() {
       const imgEl = document.getElementById('modalImg');
@@ -229,7 +274,14 @@
         copyIcon.className = 'fa-solid fa-check';
         copyText.textContent = 'Đã chép';
         resetBtn();
+        showToast('Đã sao chép ảnh vào clipboard');
       };
+
+      // helper: clipboard.write có thể treo (permission prompt không trả lời) → timeout
+      const writeWithTimeout = (item, ms = 2000) => Promise.race([
+        navigator.clipboard.write([item]),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('clipboard timeout')), ms))
+      ]);
 
       // Cách 1: vẽ ảnh vào canvas rồi copy PNG (không cần fetch, tránh CORS khi cùng origin)
       try {
@@ -238,7 +290,7 @@
         canvas.height = imgEl.naturalHeight;
         canvas.getContext('2d').drawImage(imgEl, 0, 0);
         const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+        await writeWithTimeout(new ClipboardItem({ 'image/png': blob }));
         ok();
         return;
       } catch (e1) { console.warn('Canvas copy fail, thử fetch...', e1); }
@@ -249,7 +301,7 @@
         if (!response.ok) throw new Error('HTTP ' + response.status);
         const blob = await response.blob();
         const type = (blob.type && blob.type.startsWith('image/')) ? blob.type : 'image/png';
-        await navigator.clipboard.write([new ClipboardItem({ [type]: blob })]);
+        await writeWithTimeout(new ClipboardItem({ [type]: blob }));
         ok();
         return;
       } catch (e2) { console.warn('Fetch copy fail...', e2); }
@@ -258,7 +310,9 @@
       window.open(imgSrc, '_blank');
       copyText.textContent = 'Đã mở ảnh';
       resetBtn();
+      showToast('Trình duyệt chặn clipboard — đã mở ảnh tab mới', 'ℹ');
     }
   </script>
+  <div id="toast"><span class="t-icon" id="toastIcon">✓</span><span id="toastMsg"></span></div>
 </body>
 </html>
