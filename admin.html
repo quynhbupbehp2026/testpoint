@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quản lý TestPoint - Upload</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: #121316;
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 30px 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 480px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #6366f1;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13.5px;
+      color: #a0a5b1;
+      margin-bottom: 6px;
+    }
+
+    .form-input {
+      width: 100%;
+      height: 46px;
+      background-color: #1a1b20;
+      border: 1px solid #2d2f36;
+      border-radius: 10px;
+      padding: 0 14px;
+      color: #fff;
+      font-size: 14.5px;
+      outline: none;
+    }
+
+    .form-input:focus {
+      border-color: #6366f1;
+    }
+
+    .file-wrapper {
+      border: 2px dashed #2d2f36;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      background-color: #1a1b20;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .file-wrapper input[type="file"] {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      opacity: 0; cursor: pointer;
+    }
+
+    .btn-submit {
+      width: 100%;
+      height: 46px;
+      background: #5865f2;
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .preview-img {
+      width: 100%;
+      max-height: 200px;
+      object-fit: contain;
+      margin-top: 10px;
+      display: none;
+      border-radius: 8px;
+    }
+
+    .json-output {
+      margin-top: 24px;
+      background: #0d0e12;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #22252e;
+    }
+
+    .json-output textarea {
+      width: 100%;
+      height: 120px;
+      background: transparent;
+      border: none;
+      color: #06b6d4;
+      font-family: monospace;
+      font-size: 12px;
+      resize: none;
+      outline: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h1>⚙️ Thêm TestPoint Mới</h1>
+    </div>
+
+    <form id="adminForm">
+      <div class="form-group">
+        <label>Từ khóa nhận diện (VD: a125f):</label>
+        <input type="text" id="keyword" class="form-input" placeholder="Ví dụ: a125f" required />
+      </div>
+
+      <div class="form-group">
+        <label>Tên hiển thị đầy đủ (VD: Samsung A12 A125F):</label>
+        <input type="text" id="title" class="form-input" placeholder="Ví dụ: samsung a12 a125f" required />
+      </div>
+
+      <div class="form-group">
+        <label>Chọn file ảnh Testpoint:</label>
+        <div class="file-wrapper">
+          <i class="fa-solid fa-image" style="font-size: 24px; color: #6b7280;"></i>
+          <p id="fileName" style="font-size: 13px; color: #8e8f96; margin-top: 6px;">Bấm để chọn ảnh</p>
+          <input type="file" id="imageFile" accept="image/*" required />
+        </div>
+        <img id="imgPreview" class="preview-img" alt="Preview" />
+      </div>
+
+      <button type="submit" class="btn-submit">Thêm vào dữ liệu</button>
+    </form>
+
+    <div class="json-output">
+      <label style="font-size: 12px; color: #8e8f96;">Mã mảng Database hiện tại (để dán vào code):</label>
+      <textarea id="jsonBox" readonly></textarea>
+    </div>
+  </div>
+
+  <script>
+    const imageFileInput = document.getElementById("imageFile");
+    const fileName = document.getElementById("fileName");
+    const imgPreview = document.getElementById("imgPreview");
+    const jsonBox = document.getElementById("jsonBox");
+    let base64Image = "";
+
+    // Hàm tự động nén ảnh để giảm dung lượng lưu trữ
+    function compressImage(file, maxWidth, quality, callback) {
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement("canvas");
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Nén thành ảnh JPEG chất lượng nhẹ hơn
+          const compressedDataUrl = canvas.toDataURL("image/jpeg", quality);
+          callback(compressedDataUrl);
+        };
+        img.src = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Đọc và nén file ảnh khi chọn
+    imageFileInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        fileName.textContent = file.name;
+        // Nén ảnh về chiều rộng tối đa 800px, chất lượng 0.7 (giảm dung lượng đáng kể)
+        compressImage(file, 800, 0.7, function(compressedBase64) {
+          base64Image = compressedBase64;
+          imgPreview.src = base64Image;
+          imgPreview.style.display = "block";
+        });
+      }
+    });
+
+    // Cập nhật ô hiển thị JSON
+    function updateJsonBox() {
+      const currentDb = JSON.parse(localStorage.getItem("testpoint_db")) || [];
+      jsonBox.value = JSON.stringify(currentDb, null, 2);
+    }
+    updateJsonBox();
+
+    // Lưu dữ liệu mới
+    document.getElementById("adminForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const keywordVal = document.getElementById("keyword").value.trim().toLowerCase();
+      const titleVal = document.getElementById("title").value.trim().toLowerCase();
+
+      if (!base64Image) {
+        alert("Vui lòng chọn ảnh!");
+        return;
+      }
+
+      let currentDb = JSON.parse(localStorage.getItem("testpoint_db")) || [];
+      currentDb.push({
+        keyword: keywordVal,
+        title: titleVal,
+        image: base64Image
+      });
+
+      try {
+        localStorage.setItem("testpoint_db", JSON.stringify(currentDb));
+        alert("Đã lưu thành công!");
+        
+        // Reset Form
+        document.getElementById("adminForm").reset();
+        imgPreview.style.display = "none";
+        fileName.textContent = "Bấm để chọn ảnh";
+        base64Image = "";
+        updateJsonBox();
+      } catch (error) {
+        alert("Bộ nhớ localStorage đã đầy! Bạn hãy copy mã JSON hiện tại cất đi hoặc xoá bớt dữ liệu trình duyệt.");
+        console.error("Lỗi bộ nhớ:", error);
+      }
+    });
+  </script>
+</body>
+</html>
