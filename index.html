@@ -141,7 +141,6 @@
         }
       } catch(e) {}
 
-      // Đã cập nhật owner thành 'quynhbupbehp2026'
       const cfg = { owner: 'quynhbupbehp2026', repo: 'testpoint', branch: 'main' };
       try {
         const over = JSON.parse(localStorage.getItem('gh_repo_cfg') || 'null');
@@ -388,11 +387,13 @@
       toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
     }
 
+    // ===== LỆNH SAO CHÉP TỐI ƯU CHO SAFARI IPHONE & PC =====
     async function copyImage() {
       const imgEl = document.getElementById('modalImg');
       const imgSrc = imgEl.src;
       const copyIcon = document.getElementById('copyIcon');
       const copyText = document.getElementById('copyText');
+
       const resetBtn = () => setTimeout(() => {
         copyIcon.className = 'fa-regular fa-copy';
         copyText.textContent = 'Sao chép';
@@ -405,32 +406,45 @@
         showToast('Đã sao chép ảnh vào clipboard');
       };
 
-      const writeWithTimeout = (item, ms = 2000) => Promise.race([
-        navigator.clipboard.write([item]),
-        new Promise((_, rej) => setTimeout(() => rej(new Error('clipboard timeout')), ms))
-      ]);
+      // 1. Tối ưu cho Safari iOS: Khởi tạo ClipboardItem trực tiếp với Promise<Blob>
+      if (navigator.clipboard && window.ClipboardItem) {
+        try {
+          const item = new ClipboardItem({
+            'image/png': new Promise((resolve, reject) => {
+              const canvas = document.createElement('canvas');
+              canvas.width = imgEl.naturalWidth || 300;
+              canvas.height = imgEl.naturalHeight || 300;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(imgEl, 0, 0);
+              canvas.toBlob(blob => {
+                if (blob) resolve(blob);
+                else reject(new Error('Canvas conversion failed'));
+              }, 'image/png');
+            })
+          });
 
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = imgEl.naturalWidth;
-        canvas.height = imgEl.naturalHeight;
-        canvas.getContext('2d').drawImage(imgEl, 0, 0);
-        const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-        await writeWithTimeout(new ClipboardItem({ 'image/png': blob }));
-        ok();
-        return;
-      } catch (e1) { console.warn('Canvas copy fail, thử fetch...', e1); }
+          await navigator.clipboard.write([item]);
+          ok();
+          return;
+        } catch (e1) {
+          console.warn('Cánh 1 (Promise ClipboardItem) không thành công, chuyển sang fetch...', e1);
+        }
+      }
 
+      // 2. Phương án 2: Fetch Blob trực tiếp
       try {
         const response = await fetch(imgSrc);
         if (!response.ok) throw new Error('HTTP ' + response.status);
         const blob = await response.blob();
         const type = (blob.type && blob.type.startsWith('image/')) ? blob.type : 'image/png';
-        await writeWithTimeout(new ClipboardItem({ [type]: blob }));
+        await navigator.clipboard.write([new ClipboardItem({ [type]: blob })]);
         ok();
         return;
-      } catch (e2) { console.warn('Fetch copy fail...', e2); }
+      } catch (e2) {
+        console.warn('Cánh 2 (Fetch Blob) thất bại...', e2);
+      }
 
+      // 3. Dự phòng cuối cùng: Mở ảnh tab mới nếu Safari chặn hoàn toàn
       window.open(imgSrc, '_blank');
       copyText.textContent = 'Đã mở ảnh';
       resetBtn();
