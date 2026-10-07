@@ -147,24 +147,24 @@
   <h2>Quản lý TestPoint - Thêm dữ liệu</h2>
 
   <div class="form-group">
-    <label for="brandModel">Từ khóa/Model (VD: iQOO 3):</label>
+    <label for="brandModel">Từ khóa/Model (VD: iQOO Neo 3):</label>
     <input type="text" id="brandModel" placeholder="Nhập model ngắn gọn...">
   </div>
 
   <div class="form-group">
-    <label for="displayName">Tên hiển thị đầy đủ (VD: VIVO iQOO 3):</label>
+    <label for="displayName">Tên hiển thị đầy đủ (VD: VIVO iQOO Neo 3):</label>
     <input type="text" id="displayName" placeholder="Nhập tên đầy đủ...">
   </div>
 
   <div class="form-group">
-    <label for="imageFileName">Tên file ảnh (đã up lên GitHub /images/):</label>
-    <input type="text" id="imageFileName" placeholder="Ví dụ: iqoo_3.png" oninput="updatePreview()">
-    <div class="hint">Lưu ý: Up ảnh vào thư mục <b>testpoint/images/</b> trước, sau đó nhập tên file vào đây (không kèm chữ "images/").</div>
+    <label for="imageFileName">Tên file ảnh (Cho phép viết khoảng trắng):</label>
+    <input type="text" id="imageFileName" placeholder="Ví dụ: iQOO Neo 3.png" oninput="updatePreview()">
+    <div class="hint">Tên file ảnh đặt trên GitHub phải **trùng khớp chính xác** chữ hoa/chữ thường.</div>
   </div>
 
   <div class="preview-box">
     <span id="previewText" style="color: var(--text-sub); font-size: 13px;">Xem trước ảnh Testpoint</span>
-    <img id="imgPreview" src="" alt="Preview" onerror="this.style.display='none'; document.getElementById('previewText').innerText='Không tìm thấy ảnh hoặc tên file chưa đúng';">
+    <img id="imgPreview" src="" alt="Preview" onerror="this.style.display='none'; document.getElementById('previewText').innerText='Không tìm thấy ảnh hoặc chưa đúng tên file trên GitHub';">
   </div>
 
   <button class="btn-submit" onclick="addTestpoint()">Thêm vào dữ liệu</button>
@@ -172,7 +172,7 @@
   <hr style="margin: 24px 0; border: none; border-top: 1px solid var(--border-color);">
 
   <div class="form-group">
-    <label for="databaseOutput">Mã mảng Database hiện tại (Chỉ lưu đường dẫn nhẹ):</label>
+    <label for="databaseOutput">Mã mảng Database hiện tại:</label>
     <textarea id="databaseOutput" readonly></textarea>
     <div class="btn-group">
       <button class="btn-secondary" onclick="copyDatabase()">Copy mã JSON</button>
@@ -192,9 +192,11 @@
     const text = document.getElementById('previewText');
 
     if (fileName) {
-      img.src = `images/${fileName}`;
+      // Tự động mã hóa khoảng trắng thành %20 để không bị lỗi link ảnh
+      const safePath = `images/${encodeURI(fileName)}`;
+      img.src = safePath;
       img.style.display = 'block';
-      text.innerText = `Đường dẫn: images/${fileName}`;
+      text.innerText = `Đường dẫn web: ${safePath}`;
     } else {
       img.style.display = 'none';
       text.innerText = 'Xem trước ảnh Testpoint';
@@ -211,10 +213,13 @@
       return;
     }
 
+    // Tự động xử lý đường dẫn an toàn chứa khoảng trắng
+    const safeImagePath = `images/${encodeURI(fileName)}`;
+
     const newItem = {
       id: model || title.toLowerCase().replace(/\s+/g, '_'),
       title: title,
-      image: `images/${fileName}`
+      image: safeImagePath
     };
 
     let db = JSON.parse(localStorage.getItem('testpoint_db') || '[]');
@@ -230,7 +235,7 @@
     document.getElementById('imageFileName').value = '';
     updatePreview();
 
-    alert("Đã thêm thành công! File rất nhẹ, không lo tràn bộ nhớ.");
+    alert("Đã thêm thành công!");
   }
 
   function renderDatabase() {
