@@ -157,14 +157,14 @@
   </div>
 
   <div class="form-group">
-    <label for="imageFileName">Tên file ảnh (VD: iqoo3.png):</label>
+    <label for="imageFileName">Tên file ảnh (VD: iqoo 3.jpg):</label>
     <input type="text" id="imageFileName" placeholder="Ví dụ: iqoo3.png" oninput="updatePreview()">
-    <div class="hint">Tên file ảnh đặt trên GitHub phải **trùng khớp chính xác** chữ hoa/chữ thường.</div>
+    <div class="hint">Hỗ trợ viết hoa/thường, khoảng cách và các định dạng: .png, .jpg, .jpeg, .webp, .gif, .bmp, .svg, .ico</div>
   </div>
 
   <div class="preview-box">
     <span id="previewText" style="color: var(--text-sub); font-size: 13px;">Xem trước ảnh Testpoint</span>
-    <img id="imgPreview" src="" alt="Preview" onerror="this.style.display='none'; document.getElementById('previewText').innerText='Không tìm thấy ảnh hoặc chưa đúng tên file trên GitHub';">
+    <img id="imgPreview" src="" alt="Preview">
   </div>
 
   <button class="btn-submit" onclick="addTestpoint()">Thêm vào dữ liệu</button>
@@ -186,16 +186,64 @@
     renderDatabase();
   };
 
+  const EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.svg', '.ico'];
+
+  function loadSmartImage(imgElement, originalName, onSuccess, onError) {
+    let cleanName = originalName.trim().replace(/^\/?(images\/)?/i, '');
+    let baseName = cleanName.replace(/\.[^/.]+$/, '');
+    let extMatch = cleanName.match(/\.[^/.]+$/);
+    let originalExt = extMatch ? extMatch[0].toLowerCase() : '.png';
+
+    // Tạo danh sách biến thể đường dẫn
+    let candidates = [];
+    let formats = [originalExt, ...EXTENSIONS.filter(e => e !== originalExt)];
+    let baseVariants = Array.from(new Set([
+      baseName,
+      baseName.toLowerCase(),
+      baseName.toUpperCase()
+    ]));
+
+    baseVariants.forEach(b => {
+      formats.forEach(ext => {
+        candidates.push(`images/${encodeURIComponent(b + ext)}`);
+        candidates.push(`images/${encodeURIComponent(b + ext.toUpperCase())}`);
+      });
+    });
+    candidates = Array.from(new Set(candidates));
+
+    let index = 0;
+    function tryNext() {
+      if (index >= candidates.length) {
+        if (onError) onError();
+        return;
+      }
+      let src = candidates[index++];
+      imgElement.onerror = tryNext;
+      imgElement.onload = function() {
+        imgElement.onerror = null;
+        if (onSuccess) onSuccess(src);
+      };
+      imgElement.src = src;
+    }
+    tryNext();
+  }
+
   function updatePreview() {
     const fileName = document.getElementById('imageFileName').value.trim();
     const img = document.getElementById('imgPreview');
     const text = document.getElementById('previewText');
 
     if (fileName) {
-      const safePath = `images/${encodeURI(fileName)}`;
-      img.src = safePath;
-      img.style.display = 'block';
-      text.innerText = `Đường dẫn web: ${safePath}`;
+      loadSmartImage(img, fileName, 
+        (successfulSrc) => {
+          img.style.display = 'block';
+          text.innerText = `Đường dẫn web: ${successfulSrc}`;
+        },
+        () => {
+          img.style.display = 'none';
+          text.innerText = 'Không tìm thấy ảnh hoặc chưa đúng tên file trên GitHub';
+        }
+      );
     } else {
       img.style.display = 'none';
       text.innerText = 'Xem trước ảnh Testpoint';
@@ -212,13 +260,11 @@
       return;
     }
 
-    const safeImagePath = `images/${encodeURI(fileName)}`;
-
     const newItem = {
       id: model || title.toLowerCase().replace(/\s+/g, '_'),
       keyword: model || title,
       title: title,
-      image: safeImagePath
+      image: fileName.startsWith('images/') ? fileName : `images/${fileName}`
     };
 
     let db = JSON.parse(localStorage.getItem('testpoint_db') || '[]');
