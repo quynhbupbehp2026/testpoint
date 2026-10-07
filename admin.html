@@ -80,6 +80,7 @@
 
     .preview-box {
       margin-top: 10px;
+      margin-bottom: 20px;
       padding: 12px;
       border: 1px dashed var(--border-color);
       border-radius: 6px;
@@ -285,9 +286,12 @@
     <img id="imgPreview" src="" alt="Preview" onerror="this.style.display='none'; document.getElementById('previewText').innerText='Không tìm thấy ảnh hoặc chưa đúng tên file trên GitHub';">
   </div>
 
-  <!-- ===== GITHUB AUTO-SYNC ===== -->
+  <!-- NÚT UPLOAD ẢNH + THÊM VÀO DATA.JSON TỰ ĐỘNG -->
+  <button class="gh-btn gh-btn-sync" onclick="ghAutoSync()">🚀 UPLOAD ẢNH + THÊM VÀO data.json TỰ ĐỘNG</button>
+
+  <!-- ===== GITHUB AUTO-SYNC CONFIG & LIST ===== -->
   <div class="gh-box">
-    <h3>⚡ GitHub Auto-Sync <span style="font-size:12px;color:#8b949e;font-weight:400;">— 1 nút bấm, lên thẳng repo</span></h3>
+    <h3>⚡ Cấu hình GitHub Auto-Sync <span style="font-size:12px;color:#8b949e;font-weight:400;">— Lưu cấu hình Repo & Token</span></h3>
 
     <div class="gh-row">
       <input type="text" id="ghOwner" placeholder="Username GitHub (VD: chuyenmobile)">
@@ -301,8 +305,6 @@
     </div>
 
     <div id="ghMsg"></div>
-
-    <button class="gh-btn gh-btn-sync" onclick="ghAutoSync()">🚀 UPLOAD ẢNH + THÊM VÀO data.json TỰ ĐỘNG</button>
     <div id="ghSyncStatus"></div>
 
     <div class="gh-note">
