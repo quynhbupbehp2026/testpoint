@@ -288,10 +288,24 @@
 
   <!-- NÚT UPLOAD ẢNH + THÊM VÀO DATA.JSON TỰ ĐỘNG -->
   <button class="gh-btn gh-btn-sync" onclick="ghAutoSync()">🚀 UPLOAD ẢNH + THÊM VÀO data.json TỰ ĐỘNG</button>
+  
+  <div id="ghSyncStatus"></div>
 
-  <!-- ===== GITHUB AUTO-SYNC CONFIG & LIST ===== -->
+  <!-- ===== GITHUB AUTO-SYNC ===== -->
   <div class="gh-box">
-    <h3>⚡ Cấu hình GitHub Auto-Sync <span style="font-size:12px;color:#8b949e;font-weight:400;">— Lưu cấu hình Repo & Token</span></h3>
+    <!-- 1. DANH SÁCH ENTRY TRÊN GITHUB -->
+    <div style="margin-bottom: 20px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <label style="font-size:14px; font-weight:600; color:#a5b4fc;">📦 Entry đang có trên GitHub (data.json):</label>
+        <button class="gh-btn-ghost" onclick="ghRenderEntries()">🔄 Tải danh sách</button>
+      </div>
+      <div id="ghEntryList"><div class="gh-entry-empty">Bấm "Tải danh sách" để xem.</div></div>
+    </div>
+
+    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 16px 0;">
+
+    <!-- 2. CẤU HÌNH THÔNG TIN GITHUB -->
+    <h3>⚡ Cấu hình GitHub Auto-Sync <span style="font-size:12px;color:#8b949e;font-weight:400;">— Token & Repo</span></h3>
 
     <div class="gh-row">
       <input type="text" id="ghOwner" placeholder="Username GitHub (VD: chuyenmobile)">
@@ -305,19 +319,12 @@
     </div>
 
     <div id="ghMsg"></div>
-    <div id="ghSyncStatus"></div>
 
     <div class="gh-note">
       <b>Cách lấy Token:</b> GitHub → Ảnh đại diện → <b>Settings</b> → cuộn xuống cuối → <b>Developer settings</b> →
       <b>Personal access tokens</b> → <b>Tokens (classic)</b> → <b>Generate new token (classic)</b> →
       tick <b>repo</b> → Generate → copy <code>ghp_...</code> dán vào ô trên.<br>
       Token chỉ lưu trong trình duyệt <b>máy này</b> — đừng chia sẻ link admin kèm token cho ai.
-    </div>
-
-    <div style="margin-top:14px;">
-      <label style="font-size:13px;">📦 Entry đang có trên GitHub (data.json):</label>
-      <button class="gh-btn-ghost" style="margin:6px 0;" onclick="ghRenderEntries()">🔄 Tải danh sách</button>
-      <div id="ghEntryList"><div class="gh-entry-empty">Bấm "Tải danh sách" để xem.</div></div>
     </div>
   </div>
 </div>
