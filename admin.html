@@ -293,11 +293,11 @@
 
   <!-- ===== GITHUB AUTO-SYNC ===== -->
   <div class="gh-box">
-    <!-- 1. DANH SÁCH ENTRY TRÊN GITHUB -->
+    <!-- 1. DANH SÁCH ENTRY TRÊN GITHUB (SẮP XẾP MỚI NHẤT LÊN ĐẦU) -->
     <div style="margin-bottom: 20px;">
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <label style="font-size:14px; font-weight:600; color:#a5b4fc;">📦 Entry đang có trên GitHub (data.json):</label>
-        <button class="gh-btn-ghost" onclick="ghRenderEntries()">🔄 Tải danh sách</button>
+        <label style="font-size:14px; font-weight:600; color:#a5b4fc;">📦 Entry trên GitHub (data.json - Mới nhất lên đầu):</label>
+        <button class="gh-btn-ghost" onclick="ghRenderEntriesSorted()">🔄 Tải danh sách</button>
       </div>
       <div id="ghEntryList"><div class="gh-entry-empty">Bấm "Tải danh sách" để xem.</div></div>
     </div>
@@ -340,7 +340,6 @@
     const text = document.getElementById('previewText');
 
     if (fileName) {
-      // Tự động mã hóa khoảng trắng thành %20 để không bị lỗi link ảnh
       const safePath = `images/${encodeURI(fileName)}`;
       img.src = safePath;
       img.style.display = 'block';
@@ -366,7 +365,6 @@
       if (!confirm(fmtErr + "\n\nVẫn thêm với định dạng này?")) return;
     }
 
-    // Tự động xử lý đường dẫn an toàn chứa khoảng trắng
     const safeImagePath = `images/${encodeURI(fileName)}`;
 
     const newItem = {
@@ -408,7 +406,6 @@
     const badges = document.getElementById('formatBadges');
     if (!inp.files || !inp.files[0]) return;
     const f = inp.files[0];
-    // Điền tên file (kể cả khoảng trắng) vào field tên
     nameInput.value = f.name;
     updatePreview();
     renderBadges(f.type, f.name.split('.').pop().toLowerCase(), f.size);
@@ -451,29 +448,26 @@
     }
   }
 
-  function copyDatabase() {
-    const textarea = document.getElementById('databaseOutput');
-    if (textarea) {
-      textarea.select();
-      document.execCommand('copy');
-      alert("Đã copy toàn bộ mã JSON!");
-    }
-  }
-
-  function clearLocalDB() {
-    if (confirm("Bạn có chắc muốn xóa bộ nhớ tạm trên trình duyệt này?")) {
-      localStorage.removeItem('testpoint_db');
-      renderDatabase();
+  /* Hàm gọi render danh sách đảo ngược (mới nhập lên trên) */
+  async function ghRenderEntriesSorted() {
+    if (typeof ghRenderEntries === 'function') {
+      await ghRenderEntries();
+      const listContainer = document.getElementById('ghEntryList');
+      if (listContainer) {
+        const entries = Array.from(listContainer.querySelectorAll('.gh-entry'));
+        if (entries.length > 1) {
+          entries.reverse().forEach(el => listContainer.appendChild(el));
+        }
+      }
     }
   }
 </script>
 
 <script src="gh_sync.js"></script>
 <script>
-  // Nạp config + danh sách entry khi mở trang
   window.addEventListener('load', () => {
     ghLoadCfgForm();
-    if (ghGetCfg().token) ghRenderEntries();
+    if (ghGetCfg().token) ghRenderEntriesSorted();
   });
 </script>
 </body>
