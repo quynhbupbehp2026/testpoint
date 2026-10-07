@@ -140,7 +140,6 @@
 
       clearBtn.style.display = 'block';
 
-      // Loại bỏ khoảng trắng để tìm kiếm linh hoạt (iqoo3 và iqoo 3 đều khớp)
       const queryClean = rawQuery.replace(/\s+/g, '');
 
       const filtered = testpoints.filter(item => {
@@ -189,11 +188,57 @@
       });
     }
 
+    const EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.svg', '.ico'];
+
+    function loadSmartImage(imgElement, originalPath) {
+      let cleanPath = originalPath.trim().replace(/^\/?(images\/)?/i, '');
+      let baseName = cleanPath.replace(/\.[^/.]+$/, '');
+      let extMatch = cleanPath.match(/\.[^/.]+$/);
+      let originalExt = extMatch ? extMatch[0].toLowerCase() : '.png';
+
+      let candidates = [];
+      let formats = [originalExt, ...EXTENSIONS.filter(e => e !== originalExt)];
+      let baseVariants = Array.from(new Set([
+        baseName,
+        baseName.toLowerCase(),
+        baseName.toUpperCase()
+      ]));
+
+      baseVariants.forEach(b => {
+        formats.forEach(ext => {
+          candidates.push(`images/${encodeURIComponent(b + ext)}`);
+          candidates.push(`images/${encodeURIComponent(b + ext.toUpperCase())}`);
+        });
+      });
+      candidates = Array.from(new Set(candidates));
+
+      let index = 0;
+      function tryNext() {
+        if (index >= candidates.length) {
+          imgElement.onerror = null;
+          return;
+        }
+        let src = candidates[index++];
+        imgElement.onerror = tryNext;
+        imgElement.src = src;
+      }
+      tryNext();
+    }
+
     function openModal(title, imgSrc) {
+      zoomLevel = 1;
+      const img = document.getElementById('modalImg');
+      img.style.transform = 'scale(1)';
+      img.style.maxWidth = '100%'; img.style.maxHeight = '82vh';
+      img.style.width = 'auto'; img.style.height = 'auto';
+      document.getElementById('zoomLabel').textContent = '100%';
+
       document.getElementById('modalTitle').textContent = title.toUpperCase();
-      document.getElementById('modalImg').src = imgSrc;
       document.getElementById('copyIcon').className = 'fa-regular fa-copy';
       document.getElementById('copyText').textContent = 'Sao chép';
+      
+      loadSmartImage(img, imgSrc);
+
       document.getElementById('imageModal').style.display = 'flex';
     }
 
@@ -238,17 +283,6 @@
     document.getElementById('modalImg').addEventListener('click', () => {
       if (zoomLevel === 1) zoomIn();
     });
-
-    const _origOpenModal = openModal;
-    openModal = function(title, imgSrc) {
-      zoomLevel = 1;
-      const img = document.getElementById('modalImg');
-      img.style.transform = 'scale(1)';
-      img.style.maxWidth = '100%'; img.style.maxHeight = '82vh';
-      img.style.width = 'auto'; img.style.height = 'auto';
-      document.getElementById('zoomLabel').textContent = '100%';
-      _origOpenModal(title, imgSrc);
-    };
 
     // ===== TOAST =====
     let toastTimer = null;
