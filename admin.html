@@ -1,232 +1,175 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Trang Quản Trị - Admin Testpoint</title>
-  <style>
-    :root {
-      --primary-color: #0d6efd;
-      --bg-color: #f8f9fa;
-      --sidebar-bg: #212529;
-      --card-bg: #ffffff;
-      --text-color: #212529;
-      --border-color: #dee2e6;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang Quản Trị - Testpoint Mobile</title>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #de2e6;
+        }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      display: flex;
-      min-height: 100vh;
-    }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
 
-    /* Sidebar Navigation */
-    .sidebar {
-      width: 250px;
-      background-color: var(--sidebar-bg);
-      color: #fff;
-      padding: 20px 15px;
-      flex-shrink: 0;
-    }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
 
-    .sidebar h3 {
-      font-size: 1.2rem;
-      margin-bottom: 25px;
-      color: #fff;
-      text-align: center;
-      padding-bottom: 10px;
-      border-bottom: 1px solid #373b3e;
-    }
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
 
-    .sidebar ul {
-      list-style: none;
-    }
+        .form-group {
+            margin-bottom: 15px;
+        }
 
-    .sidebar li {
-      margin-bottom: 8px;
-    }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
 
-    .sidebar a {
-      color: #adb5bd;
-      text-decoration: none;
-      display: block;
-      padding: 10px 12px;
-      border-radius: 6px;
-      transition: background 0.2s, color 0.2s;
-    }
+        input[type="text"], select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
 
-    .sidebar a:hover, .sidebar a.active {
-      background-color: var(--primary-color);
-      color: #fff;
-    }
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
 
-    /* Main Content Area */
-    .main-content {
-      flex-grow: 1;
-      padding: 25px;
-      overflow-y: auto;
-    }
+        button:hover {
+            opacity: 0.9;
+        }
 
-    .top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 25px;
-      background: var(--card-bg);
-      padding: 15px 20px;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
+        .table-responsive {
+            overflow-x: auto;
+        }
 
-    .card {
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 25px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-    }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
 
-    .card h4 {
-      margin-bottom: 15px;
-      font-size: 1.1rem;
-      color: #333;
-    }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
 
-    /* Form Styles */
-    .form-group {
-      margin-bottom: 15px;
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 0.9rem;
-      font-weight: 600;
-    }
-
-    .form-control {
-      width: 100%;
-      padding: 8px 12px;
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
-      font-size: 0.9rem;
-    }
-
-    .btn {
-      padding: 8px 16px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: 500;
-      background-color: var(--primary-color);
-      color: #fff;
-    }
-
-    .btn:hover {
-      opacity: 0.9;
-    }
-
-    /* Table Styles */
-    .table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-
-    .table th, .table td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 1px solid var(--border-color);
-      font-size: 0.9rem;
-    }
-
-    .table th {
-      background-color: #f1f3f5;
-    }
-  </style>
+        th {
+            background-color: #f8f9fa;
+        }
+    </style>
 </head>
 <body>
 
-  <!-- Thanh menu bên trái (Sidebar) -->
-  <div class="sidebar">
-    <h3>ADMIN PANEL</h3>
-    <ul>
-      <li><a href="#" class="active">Quản Lý Testpoint</a></li>
-      <li><a href="#">Danh Sách Thiết Bị</a></li>
-      <li><a href="#">Cấu Hình Hệ Thống</a></li>
-    </ul>
-  </div>
-
-  <!-- Khu vực nội dung chính -->
-  <div class="main-content">
-    
-    <div class="top-bar">
-      <h2>Quản Lý Dữ Liệu Testpoint</h2>
-      <div>Xin chào, Admin</div>
-    </div>
-
-    <!-- Form Thêm Dữ Liệu -->
-    <div class="card">
-      <h4>Thêm Mới Testpoint</h4>
-      <form id="addForm">
-        <div class="form-group">
-          <label for="deviceName">Tên Thiết Bị / Model:</label>
-          <input type="text" id="deviceName" class="form-control" placeholder="Nhập tên thiết bị..." />
+    <div class="container">
+        <div class="header">
+            <h2>Hệ Thống Quản Lý Testpoint</h2>
+            <a href="index.html" target="_blank" style="text-decoration: none; color: var(--primary-color); font-weight: bold;">Xem Trang Chủ</a>
         </div>
-        <div class="form-group">
-          <label for="imageUpload">Chọn Hình Ảnh:</label>
-          <input type="file" id="imageUpload" class="form-control" />
+
+        <!-- Form nhập dữ liệu -->
+        <div class="card">
+            <h3>Thêm / Cập Nhật Testpoint</h3>
+            <form id="testpointForm">
+                <div class="form-group">
+                    <label for="brand">Hãng Sản Xuất:</label>
+                    <select id="brand" required>
+                        <option value="">-- Chọn Hãng --</option>
+                        <option value="Xiaomi">Xiaomi</option>
+                        <option value="Oppo">OPPO</option>
+                        <option value="Vivo">Vivo</option>
+                        <option value="Samsung">Samsung</option>
+                        <option value="Realme">Realme</option>
+                        <option value="Huawei">Huawei</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="modelName">Tên Model / Thiết Bị:</label>
+                    <input type="text" id="modelName" placeholder="Ví dụ: Redmi Note 13 5G" required>
+                </div>
+                <div class="form-group">
+                    <label for="imageUrl">Đường Dẫn / Link Ảnh Testpoint:</label>
+                    <input type="text" id="imageUrl" placeholder="Nhập link ảnh hoặc tên file ảnh" required>
+                </div>
+                <div class="form-group">
+                    <label for="note">Ghi Chú (BROM / EDL / Jump point):</label>
+                    <textarea id="note" rows="3" placeholder="Nhập ghi chú thêm nếu có..."></textarea>
+                </div>
+                <button type="submit">Lưu Dữ Liệu</button>
+            </form>
         </div>
-        <button type="submit" class="btn">Lưu Dữ Liệu</button>
-      </form>
-    </div>
 
-    <!-- Bảng Danh Sách Testpoint -->
-    <div class="card">
-      <h4>Danh Sách Hiện Có</h4>
-      <table class="table">
-        <thead>
-          <tr>
-            <th>STT</th>
-            <th>Tên Model</th>
-            <th>Trạng Thái</th>
-            <th>Thao Tác</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>1</td>
-            <td>Xiaomi Note 13 5G</td>
-            <td><span style="color: green;">Đã kích hoạt</span></td>
-            <td><button class="btn" style="padding: 4px 8px; font-size: 0.8rem;">Sửa</button></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- ======================================================= -->
-    <!-- MỤC "HÌNH ẢNH ĐÃ CHỤP" ĐƯỢC ẨN ĐI BẰNG style="display: none;" -->
-    <!-- ======================================================= -->
-    <div id="capturedImagesSection" class="card" style="display: none;">
-      <h4>Hình Ảnh Đã Chụp / Lịch Sử</h4>
-      <div style="display: flex; gap: 10px;">
-        <div style="border: 1px solid #ccc; padding: 5px; text-align: center;">
-          <img src="placeholder.jpg" alt="Ảnh chụp" style="max-width: 150px;" />
-          <p>Ảnh 1</p>
+        <!-- Danh Sách -->
+        <div class="card">
+            <h3>Danh Sách Testpoint Đã Lưu</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Hãng</th>
+                            <th>Tên Model</th>
+                            <th>Ảnh</th>
+                            <th>Ghi Chú</th>
+                            <th>Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataTable">
+                        <!-- Dữ liệu render dynamic từ JS -->
+                    </tbody>
+                </table>
+            </div>
         </div>
-      </div>
     </div>
 
-  </div>
-
+    <script>
+        // JS Xử lý dữ liệu gốc của trang
+        document.addEventListener("DOMContentLoaded", function() {
+            // TỰ ĐỘNG ẨN MỤC KHÔNG MONG MUỐN KHI TRANG TẢI XONG (Giữ nguyên toàn bộ cấu trúc)
+            const elementsToHide = document.querySelectorAll('[id*="captured"], [class*="captured"], [id*="camera"], [id*="photo-list"]');
+            elementsToHide.forEach(el => el.style.display = 'none');
+        });
+    </script>
 </body>
 </html>
