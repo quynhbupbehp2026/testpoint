@@ -112,9 +112,7 @@
   <script>
     let testpoints = [];
 
-    // Lấy dữ liệu nhưng không hiển thị kết quả ngay
-    // Cache-busting: thêm timestamp để luôn tải data.json mới nhất (không bị cache cũ)
-    let manualData = [];   // entry từ data.json (tên hiển thị tùy chỉnh)
+    let manualData = [];   // entry từ data.json
     let autoData = [];     // entry tự sinh từ tên file ảnh trong images/
     const GH_LIST_CACHE_KEY = 'gh_images_cache';
     const GH_LIST_CACHE_TTL = 5 * 60 * 1000; // cache 5 phút
@@ -133,9 +131,8 @@
         .catch(() => { manualData = []; });
     }
 
-    // Tự động quét thư mục images/ qua GitHub API — KHÔNG cần token (repo public)
+    // Tự động quét thư mục images/ qua GitHub API
     function fetchAutoData() {
-      // Kiểm cache localStorage 5 phút cho nhẹ API
       try {
         const cached = JSON.parse(localStorage.getItem(GH_LIST_CACHE_KEY) || 'null');
         if (cached && (Date.now() - cached.t) < GH_LIST_CACHE_TTL) {
@@ -144,8 +141,8 @@
         }
       } catch(e) {}
 
-      const cfg = { owner: 'chuyenmobile', repo: 'testpoint', branch: 'main' };
-      // Cho phép ghi đè cấu hình repo qua localStorage (trang chạy trên domain khác vẫn dùng được)
+      // Đã cập nhật owner thành 'quynhbupbehp2026'
+      const cfg = { owner: 'quynhbupbehp2026', repo: 'testpoint', branch: 'main' };
       try {
         const over = JSON.parse(localStorage.getItem('gh_repo_cfg') || 'null');
         if (over && over.owner) Object.assign(cfg, over);
@@ -154,7 +151,6 @@
       const IMG_EXTS = ['png','jpg','jpeg','webp','gif','bmp','svg','ico'];
       const items = [];
 
-      // Quét 1 thư mục
       function scanDir(dirPath) {
         const url = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${dirPath}?ref=${cfg.branch}`;
         return fetch(url).then(res => res.json()).then(list => {
@@ -179,7 +175,6 @@
               folder: dirPath.replace('images/', '').replace('images', '')
             });
           });
-          // Đệ quét subfolder (images/samsung, images/oppo...)
           return Promise.all(subDirs.map(d => scanDir(dirPath + '/' + d.name)));
         }).catch(() => {});
       }
@@ -191,7 +186,6 @@
     }
 
     function refreshTestpoints() {
-      // data.json ghi trước (ưu tiên), ảnh tự sinh bổ sung sau (tránh trùng title)
       const seen = new Set(manualData.map(x => normalizeText(x.title)));
       testpoints = [...manualData, ...autoData.filter(x => !seen.has(normalizeText(x.title)))];
     }
@@ -211,7 +205,6 @@
     searchInput.addEventListener('input', (e) => {
       const q = e.target.value.toLowerCase().trim();
       
-      // Chỉ khi người dùng gõ tìm kiếm mới hiện kết quả
       if (q === '') {
         clearBtn.style.display = 'none';
         resultList.innerHTML = '';
@@ -231,7 +224,7 @@
 
     clearBtn.addEventListener('click', () => {
       searchInput.value = '';
-      searchInput.dispatchEvent(new Event('input')); // Kích hoạt sự kiện input để reset list
+      searchInput.dispatchEvent(new Event('input'));
       searchInput.focus();
     });
 
@@ -258,8 +251,6 @@
       });
     }
 
-    // ===== ĐỊNH DẠNG ẢNH HỖ TRỢ =====
-    // PNG / JPG / JPEG / WEBP / GIF / BMP / SVG / ICO — mọi format <img> đọc được
     const IMG_FALLBACK_EXTS = ['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp', 'svg', 'ico'];
     let currentImageSrc = '';
     let fallbackList = [];
@@ -273,24 +264,19 @@
     }
 
     function buildFallbackList(src) {
-      // Sinh danh sách ứng viên: mọi biến thể CHỮ HOA/THƯỜNG × mọi ĐỊNH DẠNG
-      // Không phân biệt hoa/thường + hỗ trợ tên có dấu cách (encodeURI giữ %20)
       const m = src.match(/^(.*\.)([a-zA-Z0-9]+)$/);
       if (!m) return [src];
-      const dir = m[1];           // "images/" hoặc "images/My%20Folder/"
-      const baseName = m[1].replace(/^.*\//, ''); // phần tên file (kèm "/" đã cắt)
+      const dir = m[1];
+      const baseName = m[1].replace(/^.*\//, '');
       const dirPart = m[1].slice(0, m[1].length - baseName.length);
       const curExt = m[2].toLowerCase();
-      // Biến thể case của TÊN FILE (không đụng phần dir)
       const caseVariants = [...new Set([
-        baseName,                     // giữ nguyên
-        baseName.toLowerCase(),       // tất cả thường
-        baseName.toUpperCase(),       // tất cả hoa
-        // Capitalize từng từ: "IQOO Neo 3" → "Iqoo Neo 3"
+        baseName,
+        baseName.toLowerCase(),
+        baseName.toUpperCase(),
         baseName.toLowerCase().replace(/(^|[\s%20_-])([a-z])/g, (x, p, c) => p + c.toUpperCase())
       ])];
       const list = [];
-      // Ưu tiên: ext gốc với các biến thể case trước, rồi ext khác
       for (const cv of caseVariants) {
         for (const e of [curExt, ...IMG_FALLBACK_EXTS.filter(x => x !== curExt)]) {
           const cand = dirPart + cv + e;
@@ -305,7 +291,6 @@
       document.getElementById('copyIcon').className = 'fa-regular fa-copy';
       document.getElementById('copyText').textContent = 'Sao chép';
       document.getElementById('imageModal').style.display = 'flex';
-      // Auto-fallback: nếu file .png không có, thử .jpg/.webp/...
       currentImageSrc = imgSrc;
       fallbackList = buildFallbackList(imgSrc);
       fallbackIdx = 0;
@@ -341,7 +326,6 @@
       document.getElementById('imageModal').style.display = 'none';
     }
 
-    // ===== ZOOM =====
     const ZOOM_MIN = 0.2, ZOOM_MAX = 6, ZOOM_STEP = 1.25;
     let zoomLevel = 1;
 
@@ -350,7 +334,6 @@
       img.style.transform = `scale(${zoomLevel})`;
       img.style.cursor = zoomLevel > 1 ? 'grab' : 'zoom-in';
       document.getElementById('zoomLabel').textContent = Math.round(zoomLevel * 100) + '%';
-      // mở rộng modal-body để scroll khi to
       const body = document.getElementById('modalBody');
       if (zoomLevel > 1) {
         img.style.maxWidth = 'none';
@@ -369,22 +352,17 @@
     }
     function zoomIn()  { zoomLevel = Math.min(zoomLevel * ZOOM_STEP, ZOOM_MAX); applyZoom(); }
     function zoomOut() { zoomLevel = Math.max(zoomLevel / ZOOM_STEP, ZOOM_MIN); applyZoom(); }
-    function zoomReset() {
-      zoomLevel = 1; applyZoom();
-    }
+    function zoomReset() { zoomLevel = 1; applyZoom(); }
 
-    // Lăn chuột zoom (khi giữ Ctrl hoặc luôn luôn trong modal-body)
     document.getElementById('modalBody').addEventListener('wheel', (e) => {
       e.preventDefault();
       if (e.deltaY < 0) zoomIn(); else zoomOut();
     }, { passive: false });
 
-    // click ảnh để phóng to 1 bước (khi chưa zoom)
     document.getElementById('modalImg').addEventListener('click', () => {
       if (zoomLevel === 1) zoomIn();
     });
 
-    // reset zoom khi mở ảnh mới
     const _origOpenModal = openModal;
     openModal = function(title, imgSrc) {
       zoomLevel = 1;
@@ -396,13 +374,11 @@
       _origOpenModal(title, imgSrc);
     };
 
-    // ===== TOAST =====
     let toastTimer = null;
     function showToast(msg, icon = '✓') {
       const t = document.getElementById('toast');
       document.getElementById('toastMsg').textContent = msg;
       document.getElementById('toastIcon').textContent = icon;
-      // restart animation icon
       const ic = document.getElementById('toastIcon');
       ic.style.animation = 'none';
       void ic.offsetWidth;
@@ -412,7 +388,6 @@
       toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
     }
 
-    // Hàm thực hiện chức năng sao chép hình ảnh
     async function copyImage() {
       const imgEl = document.getElementById('modalImg');
       const imgSrc = imgEl.src;
@@ -430,33 +405,22 @@
         showToast('Đã sao chép ảnh vào clipboard');
       };
 
-      // helper: clipboard.write có thể treo (permission prompt không trả lời) → timeout
       const writeWithTimeout = (item, ms = 2000) => Promise.race([
         navigator.clipboard.write([item]),
         new Promise((_, rej) => setTimeout(() => rej(new Error('clipboard timeout')), ms))
       ]);
 
-      // Cách 1: vẽ ảnh vào canvas rồi copy PNG (không cần fetch, tránh CORS khi cùng origin)
       try {
         const canvas = document.createElement('canvas');
         canvas.width = imgEl.naturalWidth;
         canvas.height = imgEl.naturalHeight;
         canvas.getContext('2d').drawImage(imgEl, 0, 0);
-        // Giữ GIF động: nếu blob gốc là GIF, copy nguyên blob
-        const srcBlob = await new Promise(r => {
-          const probe = new Image();
-          probe.crossOrigin = 'anonymous';
-          probe.onload = async () => { r(null); };
-          probe.onerror = () => r(null);
-          probe.src = currentImageSrc;
-        });
         const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
         await writeWithTimeout(new ClipboardItem({ 'image/png': blob }));
         ok();
         return;
       } catch (e1) { console.warn('Canvas copy fail, thử fetch...', e1); }
 
-      // Cách 2: fetch blob trực tiếp (ảnh jpg/webp trên cùng host)
       try {
         const response = await fetch(imgSrc);
         if (!response.ok) throw new Error('HTTP ' + response.status);
@@ -467,7 +431,6 @@
         return;
       } catch (e2) { console.warn('Fetch copy fail...', e2); }
 
-      // Cách 3: chỉ mở ảnh thật (nếu clipboard API bị chặn hoàn toàn)
       window.open(imgSrc, '_blank');
       copyText.textContent = 'Đã mở ảnh';
       resetBtn();
