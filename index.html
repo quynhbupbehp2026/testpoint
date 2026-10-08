@@ -23,11 +23,11 @@
     .card-info h3 { font-size: 15px; text-transform: uppercase; margin-bottom: 4px; }
     .card-info span { font-size: 12.5px; color: #8e8f96; background: #262832; padding: 2px 8px; border-radius: 6px; }
     
-    /* CSS cho Modal và Nút Copy */
+    /* CSS cho Modal và Nút Hành Động */
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.88); z-index: 100; justify-content: center; align-items: center; padding: 12px; }
     .modal-content { background: #1a1b20; border-radius: 14px; max-width: 96%; max-height: 94%; overflow: hidden; display: flex; flex-direction: column; border: 1px solid #333; position: relative; }
     .modal-header { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d2f36; }
-    .header-actions { display: flex; align-items: center; gap: 15px; }
+    .header-actions { display: flex; align-items: center; gap: 10px; }
     .copy-btn { background: #262832; border: 1px solid #3b3d46; color: #818cf8; font-size: 14px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 8px; font-weight: 500; }
     .copy-btn:hover { background: #30323d; border-color: #6366f1; color: #a5b4fc; }
     .close-btn { background: none; border: none; color: #aaa; font-size: 20px; cursor: pointer; transition: 0.2s; }
@@ -94,8 +94,11 @@
         <h4 id="modalTitle" style="font-size: 15px;"></h4>
         <div class="header-actions">
           <button class="zoom-btn" onclick="zoomOut()" title="Thu nhỏ">−</button>
-          <button class="zoom-btn" onclick="zoomReset()" title="Vừa khung">⟳</button>
+          <button class="zoom-btn" onclick="zoomReset()" title="Đặt lại">⟳</button>
           <button class="zoom-btn" onclick="zoomIn()" title="Phóng to">+</button>
+          <button class="copy-btn" onclick="rotateImage()" title="Xoay ảnh 90 độ">
+            <i class="fa-solid fa-rotate-right"></i> <span>Xoay ảnh</span>
+          </button>
           <button class="copy-btn" onclick="copyImage()" title="Sao chép ảnh vào clipboard">
             <i id="copyIcon" class="fa-regular fa-copy"></i> <span id="copyText">Sao chép</span>
           </button>
@@ -327,10 +330,11 @@
 
     const ZOOM_MIN = 0.2, ZOOM_MAX = 6, ZOOM_STEP = 1.25;
     let zoomLevel = 1;
+    let rotationAngle = 0;
 
     function applyZoom() {
       const img = document.getElementById('modalImg');
-      img.style.transform = `scale(${zoomLevel})`;
+      img.style.transform = `scale(${zoomLevel}) rotate(${rotationAngle}deg)`;
       img.style.cursor = zoomLevel > 1 ? 'grab' : 'zoom-in';
       document.getElementById('zoomLabel').textContent = Math.round(zoomLevel * 100) + '%';
       const body = document.getElementById('modalBody');
@@ -351,7 +355,8 @@
     }
     function zoomIn()  { zoomLevel = Math.min(zoomLevel * ZOOM_STEP, ZOOM_MAX); applyZoom(); }
     function zoomOut() { zoomLevel = Math.max(zoomLevel / ZOOM_STEP, ZOOM_MIN); applyZoom(); }
-    function zoomReset() { zoomLevel = 1; applyZoom(); }
+    function zoomReset() { zoomLevel = 1; rotationAngle = 0; applyZoom(); }
+    function rotateImage() { rotationAngle = (rotationAngle + 90) % 360; applyZoom(); }
 
     document.getElementById('modalBody').addEventListener('wheel', (e) => {
       e.preventDefault();
@@ -365,8 +370,9 @@
     const _origOpenModal = openModal;
     openModal = function(title, imgSrc) {
       zoomLevel = 1;
+      rotationAngle = 0;
       const img = document.getElementById('modalImg');
-      img.style.transform = 'scale(1)';
+      img.style.transform = 'scale(1) rotate(0deg)';
       img.style.maxWidth = '100%'; img.style.maxHeight = '82vh';
       img.style.width = 'auto'; img.style.height = 'auto';
       document.getElementById('zoomLabel').textContent = '100%';
