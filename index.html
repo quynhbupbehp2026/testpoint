@@ -23,7 +23,7 @@
     .card-info h3 { font-size: 15px; text-transform: uppercase; margin-bottom: 4px; }
     .card-info span { font-size: 12.5px; color: #8e8f96; background: #262832; padding: 2px 8px; border-radius: 6px; }
     
-    /* CSS cho Modal và Nút Copy */
+    /* CSS cho Modal và Nút Hành Động */
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.88); z-index: 100; justify-content: center; align-items: center; padding: 12px; }
     .modal-content { background: #1a1b20; border-radius: 14px; max-width: 96%; max-height: 94%; overflow: hidden; display: flex; flex-direction: column; border: 1px solid #333; position: relative; }
     .modal-header { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d2f36; }
@@ -33,10 +33,10 @@
     .close-btn { background: none; border: none; color: #aaa; font-size: 20px; cursor: pointer; transition: 0.2s; }
     .close-btn:hover { color: #fff; }
     
-    .modal-body { padding: 12px; overflow: auto; text-align: center; display: flex; justify-content: center; align-items: center; min-height: 200px; }
+    .modal-body { padding: 12px; overflow: auto; text-align: center; }
     .modal-body img { max-width: 100%; max-height: 82vh; object-fit: contain; border-radius: 8px; transition: transform .15s ease; cursor: zoom-in; }
     .zoom-label { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.7); color: #a5b4fc; font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 999px; pointer-events: none; }
-    .zoom-btn { background: #262832; border: 1px solid #3b3d46; color: #818cf8; font-size: 16px; cursor: pointer; transition: 0.2s; width: 32px; height: 32px; border-radius: 8px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+    .zoom-btn { background: #262832; border: 1px solid #3b3d46; color: #818cf8; font-size: 16px; cursor: pointer; transition: 0.2s; width: 30px; height: 30px; border-radius: 8px; font-weight: 700; line-height: 1; }
     .zoom-btn:hover { background: #30323d; border-color: #6366f1; color: #a5b4fc; }
     .empty-state { text-align: center; color: #6b7280; padding: 40px 0; font-size: 14px; }
 
@@ -96,8 +96,9 @@
           <button class="zoom-btn" onclick="zoomOut()" title="Thu nhỏ">−</button>
           <button class="zoom-btn" onclick="zoomReset()" title="Đặt lại">⟳</button>
           <button class="zoom-btn" onclick="zoomIn()" title="Phóng to">+</button>
-          <!-- NÚT XOAY ẢNH -->
-          <button class="zoom-btn" onclick="rotateImage()" title="Xoay ảnh 90°"><i class="fa-solid fa-rotate-right"></i></button>
+          <button class="copy-btn" onclick="rotateImage()" title="Xoay ảnh 90 độ">
+            <i class="fa-solid fa-rotate-right"></i> <span>Xoay ảnh</span>
+          </button>
           <button class="copy-btn" onclick="copyImage()" title="Sao chép ảnh vào clipboard">
             <i id="copyIcon" class="fa-regular fa-copy"></i> <span id="copyText">Sao chép</span>
           </button>
@@ -296,12 +297,12 @@
       fallbackList = buildFallbackList(imgSrc);
       fallbackIdx = 0;
       tryLoadImage(fallbackList[0],
-        (ok) => { document.getElementById('modalImg').src = ok; resetTransform(); },
+        (ok) => { document.getElementById('modalImg').src = ok; resetZoom(); },
         () => {
           fallbackIdx++;
           if (fallbackIdx < fallbackList.length) {
             tryLoadImage(fallbackList[fallbackIdx],
-              (ok) => { document.getElementById('modalImg').src = ok; currentImageSrc = ok; resetTransform(); showToast('⚠ File gốc không có — đã thay bằng .' + ok.split('.').pop().toUpperCase(), 'i'); },
+              (ok) => { document.getElementById('modalImg').src = ok; currentImageSrc = ok; resetZoom(); showToast('⚠ File gốc không có — đã thay bằng .' + ok.split('.').pop().toUpperCase(), 'i'); },
               () => openModalNextFallback(title)
             );
           } else {
@@ -315,7 +316,7 @@
       fallbackIdx++;
       if (fallbackIdx < fallbackList.length) {
         tryLoadImage(fallbackList[fallbackIdx],
-          (ok) => { document.getElementById('modalImg').src = ok; currentImageSrc = ok; resetTransform(); },
+          (ok) => { document.getElementById('modalImg').src = ok; currentImageSrc = ok; resetZoom(); },
           () => openModalNextFallback(title));
       } else {
         document.getElementById('modalImg').removeAttribute('src');
@@ -331,11 +332,11 @@
     let zoomLevel = 1;
     let rotationAngle = 0;
 
-    function applyTransform() {
+    function applyZoom() {
       const img = document.getElementById('modalImg');
       img.style.transform = `scale(${zoomLevel}) rotate(${rotationAngle}deg)`;
       img.style.cursor = zoomLevel > 1 ? 'grab' : 'zoom-in';
-      document.getElementById('zoomLabel').textContent = Math.round(zoomLevel * 100) + '%' + (rotationAngle % 360 !== 0 ? ` (${rotationAngle % 360}°)` : '');
+      document.getElementById('zoomLabel').textContent = Math.round(zoomLevel * 100) + '%';
       const body = document.getElementById('modalBody');
       if (zoomLevel > 1) {
         img.style.maxWidth = 'none';
@@ -352,12 +353,10 @@
         body.scrollLeft = 0; body.scrollTop = 0;
       }
     }
-
-    function zoomIn()  { zoomLevel = Math.min(zoomLevel * ZOOM_STEP, ZOOM_MAX); applyTransform(); }
-    function zoomOut() { zoomLevel = Math.max(zoomLevel / ZOOM_STEP, ZOOM_MIN); applyTransform(); }
-    function rotateImage() { rotationAngle = (rotationAngle + 90) % 360; applyTransform(); }
-    function resetTransform() { zoomLevel = 1; rotationAngle = 0; applyTransform(); }
-    function zoomReset() { resetTransform(); }
+    function zoomIn()  { zoomLevel = Math.min(zoomLevel * ZOOM_STEP, ZOOM_MAX); applyZoom(); }
+    function zoomOut() { zoomLevel = Math.max(zoomLevel / ZOOM_STEP, ZOOM_MIN); applyZoom(); }
+    function zoomReset() { zoomLevel = 1; rotationAngle = 0; applyZoom(); }
+    function rotateImage() { rotationAngle = (rotationAngle + 90) % 360; applyZoom(); }
 
     document.getElementById('modalBody').addEventListener('wheel', (e) => {
       e.preventDefault();
@@ -370,7 +369,13 @@
 
     const _origOpenModal = openModal;
     openModal = function(title, imgSrc) {
-      resetTransform();
+      zoomLevel = 1;
+      rotationAngle = 0;
+      const img = document.getElementById('modalImg');
+      img.style.transform = 'scale(1) rotate(0deg)';
+      img.style.maxWidth = '100%'; img.style.maxHeight = '82vh';
+      img.style.width = 'auto'; img.style.height = 'auto';
+      document.getElementById('zoomLabel').textContent = '100%';
       _origOpenModal(title, imgSrc);
     };
 
@@ -388,9 +393,10 @@
       toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
     }
 
-    // ===== LỆNH SAO CHÉP TỐI ƯU CHO SAFARI IPHONE & PC (CÓ HỖ TRỢ XOAY ẢNH KHI COPY) =====
+    // ===== LỆNH SAO CHÉP TỐI ƯU CHO SAFARI IPHONE & PC =====
     async function copyImage() {
       const imgEl = document.getElementById('modalImg');
+      const imgSrc = imgEl.src;
       const copyIcon = document.getElementById('copyIcon');
       const copyText = document.getElementById('copyText');
 
@@ -406,34 +412,16 @@
         showToast('Đã sao chép ảnh vào clipboard');
       };
 
-      // Vẽ ảnh lên Canvas (tính toán chiều xoay thực tế)
-      const getCanvasWithRotation = () => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const rad = (rotationAngle % 360) * Math.PI / 180;
-        const nw = imgEl.naturalWidth || 300;
-        const nh = imgEl.naturalHeight || 300;
-
-        if (rotationAngle % 180 !== 0) {
-          canvas.width = nh;
-          canvas.height = nw;
-        } else {
-          canvas.width = nw;
-          canvas.height = nh;
-        }
-
-        ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.rotate(rad);
-        ctx.drawImage(imgEl, -nw / 2, -nh / 2);
-        return canvas;
-      };
-
-      // 1. Tối ưu ClipboardItem với Promise<Blob>
+      // 1. Tối ưu cho Safari iOS: Khởi tạo ClipboardItem trực tiếp với Promise<Blob>
       if (navigator.clipboard && window.ClipboardItem) {
         try {
           const item = new ClipboardItem({
             'image/png': new Promise((resolve, reject) => {
-              const canvas = getCanvasWithRotation();
+              const canvas = document.createElement('canvas');
+              canvas.width = imgEl.naturalWidth || 300;
+              canvas.height = imgEl.naturalHeight || 300;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(imgEl, 0, 0);
               canvas.toBlob(blob => {
                 if (blob) resolve(blob);
                 else reject(new Error('Canvas conversion failed'));
@@ -445,12 +433,25 @@
           ok();
           return;
         } catch (e1) {
-          console.warn('Cánh 1 thất bại, chuyển sang phương án tiếp theo...', e1);
+          console.warn('Cánh 1 (Promise ClipboardItem) không thành công, chuyển sang fetch...', e1);
         }
       }
 
-      // 2. Dự phòng: Mở ảnh tab mới
-      window.open(imgEl.src, '_blank');
+      // 2. Phương án 2: Fetch Blob trực tiếp
+      try {
+        const response = await fetch(imgSrc);
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const blob = await response.blob();
+        const type = (blob.type && blob.type.startsWith('image/')) ? blob.type : 'image/png';
+        await navigator.clipboard.write([new ClipboardItem({ [type]: blob })]);
+        ok();
+        return;
+      } catch (e2) {
+        console.warn('Cánh 2 (Fetch Blob) thất bại...', e2);
+      }
+
+      // 3. Dự phòng cuối cùng: Mở ảnh tab mới nếu Safari chặn hoàn toàn
+      window.open(imgSrc, '_blank');
       copyText.textContent = 'Đã mở ảnh';
       resetBtn();
       showToast('Trình duyệt chặn clipboard — đã mở ảnh tab mới', 'ℹ');
